@@ -54,7 +54,9 @@ class Handler(BaseHTTPRequestHandler):
         self.send_header("Content-Type", content_type)
         self.send_header("Content-Length", str(len(body)))
         if cache:
-            self.send_header("Cache-Control", "public, max-age=3600")
+            # Allow caching but always revalidate, so a deploy reflects
+            # immediately instead of serving a stale UI for up to an hour.
+            self.send_header("Cache-Control", "no-cache")
         else:
             self.send_header("Cache-Control", "no-store")
         self.end_headers()
