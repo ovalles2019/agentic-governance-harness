@@ -47,6 +47,24 @@ harness as a live, interactive demo:
 python app.py     # http://localhost:8000  (honors $PORT)
 ```
 
+### Real model vs. simulation
+
+The LLM judge runs against a **real model** when an API key is present, and falls
+back to a deterministic simulation otherwise — the demo works either way, and a
+"simulated / live" badge in the UI shows which is active. Only the standard
+library is used (`urllib`), so there are still zero third-party dependencies.
+
+```bash
+export OPENAI_API_KEY=sk-...        # or ANTHROPIC_API_KEY=sk-ant-...
+export JUDGE_MODEL=gpt-4o-mini      # optional override
+python app.py
+```
+
+In live mode the judge returns a risk score per action with measured latency and
+token cost; scores are cached per action so the operating-point sweep triggers
+each unique model call at most once. Model errors degrade gracefully back to the
+simulation rather than failing the run.
+
 ### Deploy to Render
 
 A `render.yaml` Blueprint is included. The service is a single Python web
@@ -128,9 +146,9 @@ care whether the agent is real or simulated.
 
 ## Honest limitations
 
-- Latencies and token costs for the LLM judge are *simulated* within realistic
-  ranges, not measured from a live endpoint. Plugging in a real model is the
-  obvious next step and the code is structured for it.
+- With no API key, latencies and token costs for the LLM judge are *simulated*
+  within realistic ranges. Set `OPENAI_API_KEY` / `ANTHROPIC_API_KEY` to run
+  against a real model and measure them directly (see "Real model vs. simulation").
 - 12 scenarios is a demonstration suite, not a statistically powered benchmark.
   The architecture scales to hundreds; the scenario list is just data.
 - "Resolved correctly" is scored against hand-labeled ground truth, which is the

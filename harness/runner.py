@@ -80,10 +80,12 @@ def run(judge_threshold: float = 0.6, judge_seed: int = 7,
             ))
 
     metrics = _aggregate(task_results)
+    judge = next((a for a in approaches if a.name == "llm_judge"), None)
     out = {
         "scenario_count": len(SCENARIOS),
         "approaches": [a.name for a in approaches],
         "config": {"judge_threshold": judge_threshold, "judge_seed": judge_seed},
+        "judge_mode": getattr(judge, "mode", "simulated"),
         "metrics": metrics,
         "tasks": [asdict(t) for t in task_results],
     }

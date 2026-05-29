@@ -129,6 +129,12 @@ h2.title::after { content: ""; flex: 1; height: 1px; background: var(--line-soft
 .console .ctl-head { grid-column: 1 / -1; display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
 .console h3 { font-size: 17px; font-weight: 700; }
 .console h3 small { display: block; font-family: var(--mono); font-size: 12px; color: var(--muted); font-weight: 400; margin-top: 3px; }
+.modebadge { font-family: var(--mono); font-size: 11px; font-weight: 600; letter-spacing: .04em; padding: 5px 12px; border-radius: 99px; white-space: nowrap; border: 1px solid var(--line); color: var(--muted); background: var(--panel-2); display: inline-flex; align-items: center; gap: 7px; }
+.modebadge::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--faint); }
+.modebadge.live { color: var(--good); border-color: rgba(63,185,80,.4); background: rgba(63,185,80,.1); }
+.modebadge.live::before { background: var(--good); }
+.modebadge.sim { color: var(--info); border-color: rgba(88,166,255,.3); background: rgba(88,166,255,.08); }
+.modebadge.sim::before { background: var(--info); }
 .slider-block label { display: flex; justify-content: space-between; align-items: baseline; font-family: var(--mono); font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: .07em; margin-bottom: 12px; }
 .slider-block label .v { font-size: 22px; color: var(--accent); font-weight: 600; }
 input[type=range] { -webkit-appearance: none; appearance: none; width: 100%; height: 6px; border-radius: 99px; background: linear-gradient(90deg, var(--accent) var(--fill,40%), var(--line) var(--fill,40%)); outline: none; }

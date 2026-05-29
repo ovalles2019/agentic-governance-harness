@@ -11,3 +11,13 @@ services:
     envVars:
       - key: PYTHON_VERSION
         value: "3.12.6"
+      # Optional: set ONE of these in the Render dashboard to run the LLM judge
+      # against a real model (latency & cost become measured). Leave blank to use
+      # the deterministic simulation — the demo works either way.
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: ANTHROPIC_API_KEY
+        sync: false
+      # Optional: override the judge model (e.g. gpt-4o, claude-3-5-sonnet-latest).
+      - key: JUDGE_MODEL
+        sync: false

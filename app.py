@@ -40,6 +40,11 @@ def _clamp(value: float, lo: float, hi: float) -> float:
     return max(lo, min(hi, value))
 
 
+def _sweep_thresholds() -> list:
+    # Mirrors the demo slider: 0.30 .. 1.30 step 0.05.
+    return [round(0.30 + 0.05 * i, 2) for i in range(21)]
+
+
 class Handler(BaseHTTPRequestHandler):
     server_version = "AgovDemo/0.2"
 
@@ -72,6 +77,10 @@ class Handler(BaseHTTPRequestHandler):
             self._handle_run(parse_qs(parsed.query))
             return
 
+        if path == "/api/sweep":
+            self._handle_sweep(parse_qs(parsed.query))
+            return
+
         target = STATIC_FILES.get(path)
         if target and os.path.isfile(target):
             ctype = mimetypes.guess_type(target)[0] or "application/octet-stream"
@@ -97,6 +106,28 @@ class Handler(BaseHTTPRequestHandler):
         result = run(judge_threshold=round(threshold, 2), judge_seed=seed,
                      write=False, quiet=True)
         self._send_json(200, result)
+
+    def _handle_sweep(self, qs: dict) -> None:
+        """Compute the LLM-judge metric curve across the threshold range in a
+        single request. Sequential, so the per-action model cache warms once
+        (in live mode) instead of firing one model call per threshold."""
+        try:
+            seed = int(float(qs.get("seed", ["7"])[0]))
+        except (ValueError, IndexError):
+            self._send_json(400, {"error": "invalid seed"})
+            return
+        points, mode = [], "simulated"
+        for thr in _sweep_thresholds():
+            r = run(judge_threshold=thr, judge_seed=seed, write=False, quiet=True)
+            mode = r["judge_mode"]
+            j = r["metrics"]["llm_judge"]
+            points.append({
+                "threshold": thr,
+                "recall": j["recall"],
+                "precision": j["precision"],
+                "trip": j["guardrail_trip_rate"],
+            })
+        self._send_json(200, {"seed": seed, "judge_mode": mode, "points": points})
 
     def log_message(self, fmt: str, *args) -> None:
         # Compact one-line access log to stdout (captured by Render).

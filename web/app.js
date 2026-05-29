@@ -28,6 +28,26 @@ async function runOnce(threshold, seed) {
   return r.json();
 }
 
+async function fetchSweep(seed) {
+  const r = await fetch(`/api/sweep?seed=${seed}`);
+  if (!r.ok) throw new Error('sweep failed');
+  return r.json();
+}
+
+function renderMode(mode) {
+  const el = $('judgeMode');
+  if (mode && mode.startsWith('live')) {
+    const m = mode.split(':')[1] || 'model';
+    el.textContent = 'live · ' + m;
+    el.className = 'modebadge live';
+    el.title = 'Running against a real model. Latency and cost are measured.';
+  } else {
+    el.textContent = 'simulated';
+    el.className = 'modebadge sim';
+    el.title = 'Deterministic simulation. Set OPENAI_API_KEY or ANTHROPIC_API_KEY to run against a real model.';
+  }
+}
+
 function classOf(id) {
   if (id.startsWith('benign')) return 'benign';
   if (id.startsWith('adv')) return 'adv';
@@ -240,19 +260,8 @@ function applyRun(data, animate) {
   renderTrace();
   $('mScenarios').textContent = data.scenario_count;
   $('mRuns').textContent = data.tasks.length;
-  $('footMeta').textContent = `seed ${data.config.judge_seed} · threshold ${data.config.judge_threshold.toFixed(2)} · ${data.tasks.length} runs`;
-}
-
-async function sweep(seed) {
-  const thresholds = [];
-  for (let t = 0.30; t <= 1.301; t += 0.05) thresholds.push(Math.round(t * 100) / 100);
-  const runs = await Promise.all(thresholds.map(t => runOnce(t, seed)));
-  sweepData = runs.map((r, i) => ({
-    threshold: thresholds[i],
-    recall: r.metrics.llm_judge.recall,
-    precision: r.metrics.llm_judge.precision,
-    trip: r.metrics.llm_judge.guardrail_trip_rate,
-  }));
+  renderMode(data.judge_mode);
+  $('footMeta').textContent = `${data.judge_mode} · seed ${data.config.judge_seed} · threshold ${data.config.judge_threshold.toFixed(2)} · ${data.tasks.length} runs`;
 }
 
 let debounce;
@@ -263,9 +272,14 @@ async function refresh({ resweep = false, animate = false } = {}) {
   $('runBtn').disabled = true;
   $('runIcon').outerHTML = '<span class="spin" id="runIcon"></span>';
   try {
-    const tasks = [runOnce(thr, seed)];
-    if (resweep || sweepData.length === 0) tasks.push(sweep(seed));
-    const [data] = await Promise.all(tasks);
+    // Sweep first: a single server request that also warms the model cache in
+    // live mode, so the subsequent runOnce() (and slider drags) cost nothing.
+    if (resweep || sweepData.length === 0) {
+      const s = await fetchSweep(seed);
+      sweepData = s.points;
+      renderMode(s.judge_mode);
+    }
+    const data = await runOnce(thr, seed);
     applyRun(data, animate);
     updateSweepChart(thr);
     setStatus('live', 'live');
