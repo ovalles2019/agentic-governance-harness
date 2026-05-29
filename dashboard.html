@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Agentic AI Governance — Benchmark Harness</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+  :root {
+    --bg: #0d1117; --panel: #161b22; --line: #21262d;
+    --ink: #e6edf3; --muted: #8b949e;
+    --accent: #ff6b35; --good: #3fb950; --warn: #d29922; --bad: #f85149;
+    --mono: 'IBM Plex Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+    --sans: 'IBM Plex Sans', -apple-system, system-ui, sans-serif;
+  }
+  @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap');
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:var(--bg); color:var(--ink); font-family:var(--sans);
+         line-height:1.5; padding:48px 32px; max-width:1180px; margin:0 auto; }
+  .eyebrow { font-family:var(--mono); font-size:12px; letter-spacing:.18em;
+             text-transform:uppercase; color:var(--accent); margin-bottom:10px; }
+  h1 { font-size:32px; font-weight:700; letter-spacing:-.02em; margin-bottom:8px; }
+  .sub { color:var(--muted); font-size:15px; max-width:680px; margin-bottom:8px; }
+  .meta { font-family:var(--mono); font-size:12px; color:var(--muted); margin-bottom:36px; }
+  .grid { display:grid; grid-template-columns:repeat(4,1fr); gap:16px; margin-bottom:32px; }
+  .card { background:var(--panel); border:1px solid var(--line); border-radius:10px;
+          padding:18px 20px; }
+  .card h3 { font-family:var(--mono); font-size:11px; letter-spacing:.08em;
+             text-transform:uppercase; color:var(--muted); font-weight:500; margin-bottom:14px; }
+  .row { display:flex; justify-content:space-between; align-items:baseline;
+         padding:6px 0; border-bottom:1px solid var(--line); }
+  .row:last-child { border-bottom:none; }
+  .row .name { font-family:var(--mono); font-size:13px; color:var(--ink); }
+  .row .val { font-family:var(--mono); font-size:14px; font-weight:600; }
+  .charts { display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:32px; }
+  .chartbox { background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:20px; }
+  .chartbox h3 { font-size:14px; font-weight:600; margin-bottom:4px; }
+  .chartbox p { font-size:12px; color:var(--muted); margin-bottom:16px; }
+  canvas { max-height:240px; }
+  table { width:100%; border-collapse:collapse; background:var(--panel);
+          border:1px solid var(--line); border-radius:10px; overflow:hidden; font-family:var(--mono); font-size:13px; }
+  th, td { text-align:left; padding:11px 16px; border-bottom:1px solid var(--line); }
+  th { color:var(--muted); font-weight:500; font-size:11px; letter-spacing:.06em; text-transform:uppercase; }
+  td.block { color:var(--bad); } td.allow { color:var(--good); }
+  .tag { display:inline-block; padding:2px 8px; border-radius:4px; font-size:11px; }
+  .tag.ok { background:rgba(63,185,80,.15); color:var(--good); }
+  .tag.no { background:rgba(248,81,73,.15); color:var(--bad); }
+  .takeaway { background:linear-gradient(135deg, rgba(255,107,53,.08), transparent);
+              border:1px solid var(--line); border-left:3px solid var(--accent);
+              border-radius:8px; padding:18px 22px; margin-bottom:32px; font-size:14px; color:var(--ink); }
+  .takeaway strong { color:var(--accent); }
+  h2 { font-size:13px; font-family:var(--mono); letter-spacing:.1em; text-transform:uppercase;
+       color:var(--muted); margin:0 0 14px; }
+</style>
+</head>
+<body>
+  <div class="eyebrow">Reproducible Test Bed · v0.1</div>
+  <h1>Agentic AI Governance Benchmark</h1>
+  <p class="sub">Instrumented evidence — not slideware — comparing three governance
+  approaches across benign, adversarial, and ambiguous agent tasks. Every number
+  below regenerates from <span style="font-family:var(--mono)">make run</span>.</p>
+  <div class="meta" id="meta">loading results…</div>
+
+  <div class="takeaway" id="takeaway"></div>
+
+  <h2>Headline Metrics</h2>
+  <div class="grid" id="cards"></div>
+
+  <div class="charts">
+    <div class="chartbox">
+      <h3>Detection vs. Cost</h3>
+      <p>Recall (violations caught) plotted against latency overhead per task.</p>
+      <canvas id="scatter"></canvas>
+    </div>
+    <div class="chartbox">
+      <h3>Cost per Resolved Task</h3>
+      <p>Total spend divided by correctly-handled tasks (USD).</p>
+      <canvas id="bars"></canvas>
+    </div>
+  </div>
+
+  <h2>Per-Task Trace</h2>
+  <table id="trace"><thead><tr>
+    <th>Scenario</th><th>Approach</th><th>Decision</th><th>Correct</th>
+    <th>Latency</th><th>Cost</th><th>Reason</th>
+  </tr></thead><tbody></tbody></table>
+
+<script>
+const COLORS = { no_guardrails:'#8b949e', rules_policy:'#3fb950', llm_judge:'#ff6b35' };
+const LABELS = { no_guardrails:'No Guardrails', rules_policy:'Rules Policy', llm_judge:'LLM Judge' };
+
+async function load() {
+  let data;
+  try { data = await (await fetch('results/results.json')).json(); }
+  catch(e) { document.getElementById('meta').textContent =
+    'Could not load results/results.json — run `python -m harness.runner` first, then serve this folder.'; return; }
+  render(data);
+}
+
+function render(d) {
+  const m = d.metrics;
+  document.getElementById('meta').textContent =
+    `${d.scenario_count} scenarios × ${d.approaches.length} approaches · ${d.tasks.length} task runs`;
+
+  // takeaway
+  const r = m.rules_policy, j = m.llm_judge;
+  document.getElementById('takeaway').innerHTML =
+    `<strong>Finding:</strong> Both governed approaches caught 100% of violations on this suite, ` +
+    `but at very different operating points. Rules policy adds <strong>${(r.mean_policy_latency_s*1000).toFixed(0)}ms</strong> ` +
+    `at <strong>$${r.cost_per_resolved_task_usd.toFixed(5)}</strong>/resolved task with zero human interventions. ` +
+    `The LLM judge adds <strong>${j.mean_policy_latency_s.toFixed(2)}s</strong> and routes ` +
+    `<strong>${(j.intervention_frequency*100).toFixed(0)}%</strong> of tasks to a human — defensible only where ` +
+    `rules are too brittle to encode the policy. The baseline resolves just ${(m.no_guardrails.accuracy*100).toFixed(0)}% correctly.`;
+
+  // cards
+  const cards = document.getElementById('cards');
+  const order = ['guardrail_trip_rate','mean_policy_latency_s','intervention_frequency','cost_per_resolved_task_usd'];
+  const titles = {guardrail_trip_rate:'Guardrail Trip Rate', mean_policy_latency_s:'Policy Latency (s)',
+                  intervention_frequency:'Intervention Freq.', cost_per_resolved_task_usd:'Cost / Resolved ($)'};
+  order.forEach(metric => {
+    const c = document.createElement('div'); c.className='card';
+    let rows = `<h3>${titles[metric]}</h3>`;
+    d.approaches.forEach(a => {
+      let v = m[a][metric];
+      if (metric==='cost_per_resolved_task_usd') v = v==null?'n/a':'$'+v.toFixed(5);
+      else if (metric==='mean_policy_latency_s') v = v.toFixed(3)+'s';
+      else v = (v*100).toFixed(1)+'%';
+      rows += `<div class="row"><span class="name" style="color:${COLORS[a]}">${LABELS[a]}</span><span class="val">${v}</span></div>`;
+    });
+    c.innerHTML = rows; cards.appendChild(c);
+  });
+
+  // scatter: recall vs latency
+  new Chart(document.getElementById('scatter'), {
+    type:'scatter',
+    data:{ datasets: d.approaches.map(a => ({
+      label: LABELS[a], backgroundColor: COLORS[a],
+      pointRadius:9, pointHoverRadius:11,
+      data:[{x:m[a].mean_policy_latency_s, y:m[a].recall*100}]
+    }))},
+    options:{ plugins:{legend:{labels:{color:'#e6edf3',font:{family:'IBM Plex Mono'}}}},
+      scales:{ x:{title:{display:true,text:'latency overhead (s)',color:'#8b949e'},
+                   ticks:{color:'#8b949e'},grid:{color:'#21262d'}},
+               y:{title:{display:true,text:'recall (%)',color:'#8b949e'},
+                   ticks:{color:'#8b949e'},grid:{color:'#21262d'},min:-5,max:105}}}
+  });
+
+  // bars: cost per resolved
+  new Chart(document.getElementById('bars'), {
+    type:'bar',
+    data:{ labels:d.approaches.map(a=>LABELS[a]),
+      datasets:[{ data:d.approaches.map(a=>m[a].cost_per_resolved_task_usd||0),
+        backgroundColor:d.approaches.map(a=>COLORS[a]) }]},
+    options:{ plugins:{legend:{display:false}},
+      scales:{ x:{ticks:{color:'#8b949e'},grid:{display:false}},
+               y:{ticks:{color:'#8b949e',callback:v=>'$'+v.toFixed(4)},grid:{color:'#21262d'}}}}
+  });
+
+  // trace table
+  const tb = document.querySelector('#trace tbody');
+  d.tasks.forEach(t => {
+    const tr = document.createElement('tr');
+    tr.innerHTML =
+      `<td>${t.scenario_id}</td>` +
+      `<td style="color:${COLORS[t.approach]}">${LABELS[t.approach]}</td>` +
+      `<td class="${t.blocked?'block':'allow'}">${t.blocked?'BLOCK':'allow'}</td>` +
+      `<td>${t.correct?'<span class="tag ok">✓</span>':'<span class="tag no">✗</span>'}</td>` +
+      `<td>${t.total_latency_s.toFixed(3)}s</td>` +
+      `<td>$${t.total_cost_usd.toFixed(5)}</td>` +
+      `<td style="color:var(--muted)">${t.reason}</td>`;
+    tb.appendChild(tr);
+  });
+}
+load();
+</script>
+</body>
+</html>

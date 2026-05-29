@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Agentic AI Governance — Live Benchmark</title>
+<meta name="description" content="Interactive, instrumented benchmark comparing governance approaches for agentic AI: guardrail trip rate, policy latency, intervention frequency, and cost per resolved task.">
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+
+<nav>
+  <div class="brand">
+    <img src="/favicon.svg" alt="">
+    <span>Agentic Governance<small>Live Benchmark · v0.2</small></span>
+  </div>
+  <div class="spacer"></div>
+  <a class="navlink hide-sm" href="#console">Console</a>
+  <a class="navlink hide-sm" href="#metrics">Metrics</a>
+  <a class="navlink hide-sm" href="#trace">Trace</a>
+  <a class="navlink hide-sm" href="#method">Method</a>
+  <div class="status"><span class="dot" id="statusDot"></span><span id="statusText">idle</span></div>
+</nav>
+
+<div class="wrap">
+
+  <!-- hero -->
+  <header class="hero">
+    <div class="eyebrow">Reproducible Test Bed · Instrumented Evidence</div>
+    <h1>Measure what your <span class="grad">AI guardrails</span> actually cost.</h1>
+    <p class="lead">A live benchmark that compares three governance approaches across benign,
+      adversarial, and ambiguous agent tasks — measuring guardrail trip rate, policy
+      enforcement latency, human-intervention frequency, and cost per <em>correctly</em>
+      resolved task. Move the slider; every number recomputes against ground truth in real time.</p>
+    <div class="cta">
+      <button class="btn primary" id="runBtn">
+        <span id="runIcon">▶</span><span>Run benchmark live</span>
+      </button>
+      <a class="btn ghost" href="/dashboard.html">Static dashboard →</a>
+    </div>
+    <div class="pill-meta">
+      <div class="pm"><b id="mScenarios">12</b> scenarios</div>
+      <div class="pm"><b>3</b> governance approaches</div>
+      <div class="pm"><b id="mRuns">36</b> task runs / sweep</div>
+      <div class="pm"><b>0</b> third-party dependencies</div>
+    </div>
+  </header>
+
+  <!-- console -->
+  <section id="console">
+    <h2 class="title">Operating Console</h2>
+    <div class="console">
+      <div class="ctl-head">
+        <h3>LLM-judge operating point<small>The single knob that trades recall for precision, latency &amp; cost.</small></h3>
+      </div>
+
+      <div class="slider-block">
+        <label>Risk block threshold <span class="v mono" id="thVal">0.60</span></label>
+        <input type="range" id="threshold" min="0.30" max="1.30" step="0.05" value="0.60">
+        <div class="ticks"><span>0.30 · block more</span><span>0.80</span><span>1.30 · block less</span></div>
+        <div class="seedrow">
+          <label for="seed">Sim seed</label>
+          <input type="number" id="seed" value="7" min="0" max="9999">
+          <span class="mono" style="color:var(--faint);font-size:12px">deterministic &amp; reproducible</span>
+        </div>
+      </div>
+
+      <div class="readout" id="readout">
+        <div class="r"><span class="k">judge recall</span><span class="val skeleton" id="roRecall">—</span></div>
+        <div class="r"><span class="k">judge precision</span><span class="val skeleton" id="roPrec">—</span></div>
+        <div class="r"><span class="k">interventions</span><span class="val skeleton" id="roInterv">—</span></div>
+        <div class="r"><span class="k">cost / resolved</span><span class="val skeleton" id="roCost">—</span></div>
+        <div class="verdict" id="verdict"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- takeaway -->
+  <section>
+    <div class="takeaway" id="takeaway">Running first benchmark…</div>
+  </section>
+
+  <!-- metrics -->
+  <section id="metrics">
+    <h2 class="title">Headline Metrics</h2>
+    <div class="grid" id="cards"></div>
+  </section>
+
+  <!-- charts -->
+  <section>
+    <h2 class="title">Evidence</h2>
+    <div class="charts">
+      <div class="chartbox full">
+        <h3>Operating-point sweep — recall, precision &amp; trip rate vs. threshold</h3>
+        <p>The whole point of the test bed: as you loosen the LLM judge, it catches fewer violations. The dashed line marks your current setting.</p>
+        <canvas id="sweep"></canvas>
+      </div>
+      <div class="chartbox">
+        <h3>Detection vs. cost</h3>
+        <p>Recall (violations caught) plotted against latency overhead per task.</p>
+        <canvas id="scatter"></canvas>
+      </div>
+      <div class="chartbox">
+        <h3>Cost per resolved task</h3>
+        <p>Total spend divided by correctly-handled tasks (USD).</p>
+        <canvas id="bars"></canvas>
+      </div>
+    </div>
+  </section>
+
+  <!-- trace -->
+  <section id="trace">
+    <h2 class="title">Per-Task Trace</h2>
+    <div class="filters" id="filters">
+      <span class="chip on" data-f="all">All tasks</span>
+      <span class="chip" data-f="benign">Benign</span>
+      <span class="chip" data-f="adv">Adversarial</span>
+      <span class="chip" data-f="amb">Ambiguous</span>
+      <span style="flex:1"></span>
+      <span class="chip on" data-a="all">All approaches</span>
+      <span class="chip" data-a="rules_policy">Rules</span>
+      <span class="chip" data-a="llm_judge">LLM judge</span>
+    </div>
+    <div class="tablewrap">
+      <table id="traceTable">
+        <thead><tr>
+          <th>Scenario</th><th>Class</th><th>Approach</th><th>Decision</th>
+          <th>Correct</th><th>Latency</th><th>Cost</th><th>Reason</th><th>Prompt</th>
+        </tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- methodology -->
+  <section id="method">
+    <h2 class="title">How it works</h2>
+    <div class="cols">
+      <div class="note">
+        <h3>The three approaches</h3>
+        <p><b style="color:var(--muted)">No guardrails</b> — baseline; allows everything. Establishes the cost and failure rate of doing nothing.</p>
+        <p style="margin-top:10px"><b style="color:var(--good)">Rules policy</b> — deterministic pattern matching on the agent's intended action. Fast, cheap, brittle.</p>
+        <p style="margin-top:10px"><b style="color:var(--accent)">LLM judge</b> — a model-as-judge that reasons about each action. Higher latency and cost, better at catching intent the rules miss, but can over-block and routes blocks to humans.</p>
+      </div>
+      <div class="note">
+        <h3>Honest limitations</h3>
+        <ul>
+          <li>The LLM judge is <b style="color:var(--muted)">simulated</b> with realistic latency/cost ranges, not a live endpoint. The code is structured so <code>_simulated_judge</code> swaps for a real model call without touching the runner, metrics, or this UI.</li>
+          <li>12 scenarios is a demonstration suite, not a statistically powered benchmark. The architecture scales to hundreds — the scenario list is just data.</li>
+          <li>"Resolved correctly" is scored against hand-labeled ground truth.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <span>Agentic AI Governance Harness · zero-dependency Python · served live on Render</span>
+    <span id="footMeta"></span>
+  </footer>
+</div>
+
+<script src="/app.js"></script>
+</body>
+</html>

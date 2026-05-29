@@ -1,0 +1,3 @@
+# This project intentionally has zero third-party dependencies.
+# The live demo server (app.py) and the harness use only the Python standard library.
+# This file exists so Render detects the Python runtime; keep it empty of packages.
