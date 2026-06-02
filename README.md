@@ -8,6 +8,33 @@ task, rather than asserting guardrails work and moving on.
 This is a v0.1 proof of concept: small, honest, and fully reproducible. Every
 number in the dashboard regenerates from a single command.
 
+**Live demo: https://agentic-governance-demo.onrender.com** — drag the LLM-judge
+risk threshold and watch recall, precision, latency, intervention rate, and cost
+recompute against ground truth in real time. Runs a real model-as-judge (with
+measured latency and token cost) when an API key is set, and a deterministic
+simulation otherwise.
+
+![Interactive operating console with live model-as-judge](docs/screenshots/01-hero.png)
+
+<details>
+<summary><b>More screenshots</b></summary>
+
+### Headline metrics & operating-point sweep
+As you loosen the judge, it catches fewer violations — the dashed line marks the
+current threshold.
+
+![Headline metrics and operating-point sweep chart](docs/screenshots/02-metrics-sweep.png)
+
+### Per-task trace with the model's real reasoning
+Every decision is scored against ground truth. Here the "smart" LLM judge
+over-blocks a legitimate single-customer refund (a false positive) that the
+deterministic rules handle correctly — exactly the kind of finding this test bed
+exists to surface.
+
+![Per-task trace showing each governance decision and the model's reasoning](docs/screenshots/03-trace-reasoning.png)
+
+</details>
+
 ## Why this exists
 
 The industry has a lot of claims about guardrails, policy enforcement, and agent
