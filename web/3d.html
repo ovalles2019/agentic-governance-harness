@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Agentic AI Governance — 3D Console</title>
+<meta name="description" content="Immersive 3D benchmark console — click scenarios, explore governance towers, and watch guardrail decisions unfold in real time.">
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/3d.css?v=1">
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+  }
+}
+</script>
+</head>
+<body>
+
+<div id="canvas-wrap"></div>
+
+<!-- HUD -->
+<div id="hud">
+  <nav class="hud-nav">
+    <div class="brand">
+      <img src="/favicon.svg" alt="">
+      <span>Agentic Governance<small>3D Console</small></span>
+    </div>
+    <div class="spacer"></div>
+    <a class="navlink" href="/">2D view</a>
+    <a class="navlink" href="/dashboard.html">Dashboard</a>
+    <div class="status"><span class="dot" id="statusDot"></span><span id="statusText">idle</span></div>
+  </nav>
+
+  <div class="hud-left">
+    <div class="panel intro">
+      <div class="eyebrow">Click · Explore · Measure</div>
+      <h1>Governance in <span class="grad">3D</span></h1>
+      <p>Click any scenario orb to trace decisions across all three approaches. Drag to orbit, scroll to zoom.</p>
+      <button class="btn primary" id="runBtn">
+        <span id="runIcon">▶</span><span>Run benchmark</span>
+      </button>
+    </div>
+
+    <div class="panel controls">
+      <div class="ctl-head">
+        <h3>LLM Judge Threshold</h3>
+        <span class="modebadge" id="judgeMode">simulated</span>
+      </div>
+      <label>Risk block threshold <span class="v mono" id="thVal">0.60</span></label>
+      <input type="range" id="threshold" min="0.30" max="1.30" step="0.05" value="0.60">
+      <div class="ticks"><span>0.30 · block more</span><span>1.30 · block less</span></div>
+      <div class="seedrow">
+        <label for="seed">Seed</label>
+        <input type="number" id="seed" value="7" min="0" max="9999">
+      </div>
+      <div class="readout" id="readout">
+        <div class="r"><span class="k">recall</span><span class="val" id="roRecall">—</span></div>
+        <div class="r"><span class="k">precision</span><span class="val" id="roPrec">—</span></div>
+        <div class="r"><span class="k">interventions</span><span class="val" id="roInterv">—</span></div>
+        <div class="r"><span class="k">cost / resolved</span><span class="val" id="roCost">—</span></div>
+      </div>
+    </div>
+
+    <div class="panel legend">
+      <h4>Scenario classes</h4>
+      <div class="leg-item"><span class="dot-leg benign"></span> Benign — should allow</div>
+      <div class="leg-item"><span class="dot-leg adv"></span> Adversarial — should block</div>
+      <div class="leg-item"><span class="dot-leg amb"></span> Ambiguous — borderline</div>
+      <h4 style="margin-top:14px">Governance towers</h4>
+      <div class="leg-item"><span class="dot-leg ng"></span> No guardrails</div>
+      <div class="leg-item"><span class="dot-leg rules"></span> Rules policy</div>
+      <div class="leg-item"><span class="dot-leg judge"></span> LLM judge</div>
+    </div>
+  </div>
+
+  <div class="hud-right">
+    <div class="panel detail" id="detailPanel">
+      <h3 id="detailTitle">Select a scenario</h3>
+      <p id="detailPrompt" class="muted">Click any glowing orb in the arena to inspect how each governance layer responds.</p>
+      <div id="detailDecisions" class="decisions"></div>
+    </div>
+
+    <div class="panel metrics" id="metricsPanel">
+      <h4>Headline metrics</h4>
+      <div id="metricBars"></div>
+    </div>
+
+    <div class="panel takeaway" id="takeaway">Running first benchmark…</div>
+  </div>
+
+  <div class="hud-bottom">
+    <div class="hint"><kbd>Click</kbd> scenario orb · <kbd>Drag</kbd> orbit · <kbd>Scroll</kbd> zoom · <kbd>Click</kbd> tower to focus approach</div>
+  </div>
+</div>
+
+<div id="tooltip" class="tooltip" hidden></div>
+
+<script type="module" src="/3d.js?v=1"></script>
+</body>
+</html>

@@ -29,6 +29,10 @@ WEB = os.path.join(ROOT, "web")
 STATIC_FILES = {
     "/": os.path.join(WEB, "index.html"),
     "/index.html": os.path.join(WEB, "index.html"),
+    "/3d": os.path.join(WEB, "3d.html"),
+    "/3d.html": os.path.join(WEB, "3d.html"),
+    "/3d.css": os.path.join(WEB, "3d.css"),
+    "/3d.js": os.path.join(WEB, "3d.js"),
     "/styles.css": os.path.join(WEB, "styles.css"),
     "/app.js": os.path.join(WEB, "app.js"),
     "/dashboard.html": os.path.join(ROOT, "dashboard.html"),
