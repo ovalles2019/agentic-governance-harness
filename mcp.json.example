@@ -1,0 +1,10 @@
+{
+  "mcpServers": {
+    "supply-chain-tools": {
+      "command": "python",
+      "args": ["-m", "src.mcp.server"],
+      "cwd": "/Users/oscarvalles/Downloads/files",
+      "env": {}
+    }
+  }
+}

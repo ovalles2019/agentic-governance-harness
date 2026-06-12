@@ -7,6 +7,14 @@ services:
     buildCommand: pip install -r requirements.txt
     startCommand: python app.py
     healthCheckPath: /healthz
+  - type: web
+    name: supply-chain-agent-api
+    runtime: python
+    plan: free
+    region: oregon
+    buildCommand: pip install -r requirements.txt && python -m grpc_tools.protoc -I proto --python_out=src/grpc_gen --grpc_python_out=src/grpc_gen proto/inventory.proto
+    startCommand: uvicorn src.api.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /healthz
     autoDeploy: true
     envVars:
       - key: PYTHON_VERSION

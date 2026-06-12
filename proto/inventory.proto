@@ -1,0 +1,27 @@
+syntax = "proto3";
+
+package supplychain;
+
+// gRPC inventory service — enterprise connector pattern with typed contracts.
+service InventoryService {
+  rpc GetStockLevel (StockRequest) returns (StockResponse);
+  rpc ListLowStock (LowStockRequest) returns (stream StockResponse);
+}
+
+message StockRequest {
+  string sku = 1;
+  string warehouse_id = 2;
+}
+
+message LowStockRequest {
+  string warehouse_id = 1;
+  int32 threshold_units = 2;
+}
+
+message StockResponse {
+  string sku = 1;
+  string warehouse_id = 2;
+  int32 quantity = 3;
+  int32 reorder_point = 4;
+  string status = 5;
+}

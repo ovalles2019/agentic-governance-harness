@@ -1,3 +1,37 @@
-# This project intentionally has zero third-party dependencies.
-# The live demo server (app.py) and the harness use only the Python standard library.
-# This file exists so Render detects the Python runtime; keep it empty of packages.
+# Core — always required
+fastapi>=0.115.0
+uvicorn[standard]>=0.32.0
+pydantic>=2.9.0
+pydantic-settings>=2.6.0
+httpx>=0.27.0
+
+# LLM & multi-agent frameworks
+langchain-core>=0.3.0
+langgraph>=0.2.0
+
+# MCP (Model Context Protocol)
+mcp>=1.1.0
+
+# Memory & caching
+redis>=5.0.0
+
+# Event streaming & gRPC
+aiokafka>=0.11.0
+grpcio>=1.67.0
+grpcio-tools>=1.67.0
+protobuf>=5.28.0
+
+# Evaluation & MLOps
+mlflow>=2.17.0
+pytest>=8.3.0
+pytest-asyncio>=0.24.0
+
+# Observability
+opentelemetry-api>=1.27.0
+opentelemetry-sdk>=1.27.0
+opentelemetry-instrumentation-fastapi>=0.48b0
+opentelemetry-exporter-otlp>=1.27.0
+prometheus-client>=0.21.0
+
+# Optional heavy deps — install with: pip install -r requirements-optional.txt
+# langchain-openai, langchain-community, crewai, chromadb, sentence-transformers, ray

@@ -1,0 +1,67 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: supply-chain-agent
+  labels:
+    app: supply-chain-agent
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: supply-chain-agent
+  template:
+    metadata:
+      labels:
+        app: supply-chain-agent
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8080"
+        prometheus.io/path: "/metrics"
+    spec:
+      containers:
+        - name: api
+          image: supply-chain-agent:latest
+          ports:
+            - containerPort: 8080
+          env:
+            - name: REDIS_URL
+              value: "redis://redis-service:6379/0"
+            - name: CHROMA_HOST
+              value: "chroma-service"
+            - name: KAFKA_BOOTSTRAP
+              value: "kafka-service:9092"
+            - name: ENABLE_KAFKA
+              value: "true"
+            - name: OTEL_EXPORTER_ENDPOINT
+              value: "http://otel-collector:4318"
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 15
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: 8080
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          resources:
+            requests:
+              cpu: 250m
+              memory: 512Mi
+            limits:
+              cpu: "1"
+              memory: 1Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: supply-chain-agent
+spec:
+  selector:
+    app: supply-chain-agent
+  ports:
+    - port: 80
+      targetPort: 8080
+  type: ClusterIP
