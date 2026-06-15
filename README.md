@@ -6,6 +6,8 @@
 
 **Live governance demo:** https://agentic-governance-demo.onrender.com
 
+**Portfolio:** [oscar-valles.com](https://www.oscar-valles.com/) · See also [Nexus SRE Agent](https://cloud-sre-agent.onrender.com/) (Bedrock + CloudWatch + FinOps)
+
 ---
 
 ## Job Description → Code Mapping
